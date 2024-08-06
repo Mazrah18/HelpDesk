@@ -1,37 +1,33 @@
-require('dotenv').config();
-const cors = require('cors');
-const express = require('express');
-const { MongoClient } = require('mongodb');
+require('dotenv').config()
+const cors = require('cors')
+const express = require('express')
+const mongoose = require('mongoose')
+const ticketRoutes = require('./routes/TicketRoutes')
 
-// Create Express app
-const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+// express app
+const app = express()
 
-// Logging middleware
+// middleware
+app.use(express.json())
+
+app.use(cors())
 app.use((req, res, next) => {
-  console.log(req.path, req.method);
-  next();
-});
+  console.log(req.path, req.method)
+  next()
+})
 
-// Route to get all tickets
-app.get('/ticket', async (req, res) => {
-  try {
-    const client = await MongoClient.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-    const db = client.db(process.env.DB_NAME || 'HelpDesk');
-    const tickets = await db.collection('Ticket').find().toArray();
-    res.json(tickets);
-    client.close();
-  } catch (error) {
-    console.error('Error fetching tickets:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// routes
+app.use('/api/tickets', ticketRoutes)
 
-// Connect to MongoDB and start the server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log('Connected to db & listening on port', port);
-});
+// connect to db
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    // listen for requests
+    app.listen(process.env.PORT, () => {
+      console.log('connected to db & listening on port', process.env.PORT)
+    })
+  })
+  .catch((error) => {
+    console.log(error)
+  })
